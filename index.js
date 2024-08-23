@@ -1,13 +1,13 @@
-const contacts = require('./contacts');
-const { Command } = require('commander');
+import { Command } from 'commander';
+import * as contacts from './contacts.js';
 
 const program = new Command();
 program
   .option('-a, --action <type>', 'choose action')
-  .option('-i, --id <type>', 'user id')
-  .option('-n, --name <type>', 'user name')
-  .option('-e, --email <type>', 'user email')
-  .option('-p, --phone <type>', 'user phone');
+  .option('-i, --id <type>', 'contact id')
+  .option('-n, --name <type>', 'contact name')
+  .option('-e, --email <type>', 'contact email')
+  .option('-p, --phone <type>', 'contact phone');
 
 program.parse(process.argv);
 
@@ -18,20 +18,28 @@ async function invokeAction({ action, id, name, email, phone }) {
     case 'list':
       console.table(await contacts.listContacts());
       break;
-
     case 'get':
       const contact = await contacts.getContactById(id);
-      contact ? console.log(contact) : console.log(`Contact with id ${id} not found.`);
+      if (contact) {
+        console.log(contact);
+      } else {
+        console.log(`Contact with id ${id} not found.`);
+      }
       break;
-
     case 'add':
-      await contacts.addContact(name, email, phone);
+      const newContactId = await contacts.addContact(name, email, phone);
+      if (newContactId) {
+        console.log(`Contact ${name} added successfully.`);
+      }
       break;
-
     case 'remove':
-      await contacts.removeContact(id);
+      const isRemoved = await contacts.removeContact(id);
+      if (isRemoved) {
+        console.log(`Contact with id ${id} removed successfully.`);
+      } else {
+        console.log(`Contact with id ${id} not found.`);
+      }
       break;
-
     default:
       console.warn('\x1B[31m Unknown action type!');
   }

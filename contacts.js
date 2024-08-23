@@ -1,7 +1,7 @@
-const fs = require('fs').promises;
-const path = require('path');
+import fs from 'fs/promises';
+import path from 'path';
 
-const contactsPath = path.join(__dirname, 'db', 'contacts.json');
+const contactsPath = path.join(process.cwd(), 'db', 'contacts.json');
 
 async function listContacts() {
   try {
@@ -15,43 +15,47 @@ async function listContacts() {
 
 async function getContactById(contactId) {
   const contacts = await listContacts();
-  return contacts.find((contact) => contact.id === contactId);
+  return contacts.find(contact => contact.id === contactId);
 }
 
 async function removeContact(contactId) {
   const contacts = await listContacts();
-  const updatedContacts = contacts.filter((contact) => contact.id !== contactId);
+  const contactToRemove = contacts.find(contact => contact.id === contactId);
+
+  if (!contactToRemove) {
+    console.log('Contact not found.');
+    return false;
+  }
+
+  const filteredContacts = contacts.filter(contact => contact.id !== contactId);
 
   try {
-    await fs.writeFile(contactsPath, JSON.stringify(updatedContacts, null, 2));
-    console.log(`Contact with id ${contactId} removed successfully.`);
+    await fs.writeFile(contactsPath, JSON.stringify(filteredContacts, null, 2), 'utf-8');
+    console.log('Removed contact:', contactToRemove);
+    return true;
   } catch (error) {
-    console.error('Error writing updated contacts:', error);
+    console.error('Error removing contact:', error);
+    return false;
   }
 }
 
 async function addContact(name, email, phone) {
   const contacts = await listContacts();
   const newContact = {
-    id: (contacts.length + 1).toString(), // Incremental ID
+    id: Date.now().toString(),
     name,
     email,
-    phone,
+    phone
   };
-
   contacts.push(newContact);
-
   try {
-    await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-    console.log(`Contact ${name} added successfully.`);
+    await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2), 'utf-8');
+    console.log('Added contact:', newContact);
+    return newContact.id;
   } catch (error) {
     console.error('Error adding contact:', error);
+    return null;
   }
 }
 
-module.exports = {
-  listContacts,
-  getContactById,
-  removeContact,
-  addContact,
-};
+export { listContacts, getContactById, removeContact, addContact };
